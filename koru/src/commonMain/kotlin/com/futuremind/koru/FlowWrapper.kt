@@ -15,26 +15,21 @@ class FlowWrapper<T>(
         onComplete: () -> Unit,
         onThrow: (error: Throwable) -> Unit
     ) = subscribe(
-        scope = scopeProvider?.scope,
+        scope = scopeProvider?.scope
+            ?: throw IllegalArgumentException("To use implicit scope, you have to provide it via @ToNativeClass.launchOnScope and @ExportedScopeProvider."),
         onEach = onEach,
         onComplete = onComplete,
         onThrow = onThrow
     )
 
     fun subscribe(
-        scope: CoroutineScope?,
+        scope: CoroutineScope,
         onEach: (item: T) -> Unit,
         onComplete: () -> Unit,
         onThrow: (error: Throwable) -> Unit
-    ): Job? {
-        if(scope==null){
-            onThrow(IllegalArgumentException("To use implicit scope, you have to provide it via @ToNativeClass.launchOnScope and @ExportedScopeProvider."))
-            return null
-        }
-        return flow
-            .onEach { onEach(it.freeze()) }
-            .catch { onThrow(it.freeze()) }
-            .onCompletion { onComplete() }
-            .launchIn(scope)
-    }
+    ): Job = flow
+        .onEach { onEach(it.freeze()) }
+        .catch { onThrow(it.freeze()) }
+        .onCompletion { onComplete() }
+        .launchIn(scope)
 }
